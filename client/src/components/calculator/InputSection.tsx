@@ -272,7 +272,7 @@ export default function InputSection({ onCalculate, initialValues }: InputSectio
                 name="regularPayRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Blended Pay Rate</FormLabel>
+                    <FormLabel>Regular Pay Rate</FormLabel>
                     <FormControl>
                       <CurrencyInput 
                         value={field.value}
@@ -308,7 +308,7 @@ export default function InputSection({ onCalculate, initialValues }: InputSectio
                 name="taxableStipend"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Taxable Pay Rate</FormLabel>
+                    <FormLabel>Taxable Stipend</FormLabel>
                     <FormControl>
                       <CurrencyInput 
                         value={field.value}
@@ -326,7 +326,7 @@ export default function InputSection({ onCalculate, initialValues }: InputSectio
                 name="nonTaxableStipend"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Lodging Stipend</FormLabel>
+                    <FormLabel>Non-Taxable Stipend</FormLabel>
                     <FormControl>
                       <CurrencyInput 
                         value={field.value}
@@ -344,7 +344,7 @@ export default function InputSection({ onCalculate, initialValues }: InputSectio
                 name="mealsStipend"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>M&I Stipend</FormLabel>
+                    <FormLabel>Meals Stipend</FormLabel>
                     <FormControl>
                       <CurrencyInput 
                         value={field.value}
