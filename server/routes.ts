@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPayPackageSchema, insertCommunicationLogSchema } from "@shared/schema";
+import { 
+  insertPayPackageSchema, 
+  insertCommunicationLogSchema,
+  insertJournalEntrySchema,
+  insertReminderSchema
+} from "@shared/schema";
 import { z } from "zod";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
@@ -278,6 +283,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const logs = await storage.getCommunicationLogs(id);
       res.json(logs);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Journal Entry Routes
+  // Get all journal entries
+  app.get("/api/journal", async (req, res) => {
+    try {
+      // Get all journal entries from all pay packages
+      const allEntries = [];
+      const payPackages = await storage.getAllPayPackages();
+      
+      for (const pkg of payPackages) {
+        const entries = await storage.getJournalEntriesForPackage(pkg.id);
+        allEntries.push(...entries);
+      }
+      
+      // Sort by most recent first
+      allEntries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(allEntries);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+  
+  // Get journal entries for a pay package
+  app.get("/api/pay-packages/:id/journal", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const entries = await storage.getJournalEntriesForPackage(id);
+      res.json(entries);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Create a new journal entry
+  app.post("/api/journal", async (req, res) => {
+    try {
+      const validatedData = insertJournalEntrySchema.parse(req.body);
+      const newEntry = await storage.createJournalEntry(validatedData);
+      res.status(201).json(newEntry);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update a journal entry
+  app.put("/api/journal/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const validatedData = insertJournalEntrySchema.parse(req.body);
+      const updatedEntry = await storage.updateJournalEntry(id, validatedData);
+      
+      if (!updatedEntry) {
+        return res.status(404).json({ message: "Journal entry not found" });
+      }
+
+      res.json(updatedEntry);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete a journal entry
+  app.delete("/api/journal/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const success = await storage.deleteJournalEntry(id);
+      if (!success) {
+        return res.status(404).json({ message: "Journal entry not found" });
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Reminder Routes
+  // Get reminders for a pay package
+  app.get("/api/pay-packages/:id/reminders", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const reminders = await storage.getRemindersForPackage(id);
+      res.json(reminders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get all reminders (with optional filter for completed)
+  app.get("/api/reminders", async (req, res) => {
+    try {
+      const includeCompleted = req.query.includeCompleted === 'true';
+      const reminders = await storage.getAllReminders(includeCompleted);
+      res.json(reminders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get upcoming reminders
+  app.get("/api/reminders/upcoming", async (req, res) => {
+    try {
+      const daysAhead = parseInt(req.query.days as string) || 7; // Default to 7 days
+      const reminders = await storage.getUpcomingReminders(daysAhead);
+      res.json(reminders);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Create a new reminder
+  app.post("/api/reminders", async (req, res) => {
+    try {
+      const validatedData = insertReminderSchema.parse(req.body);
+      const newReminder = await storage.createReminder(validatedData);
+      res.status(201).json(newReminder);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update a reminder
+  app.put("/api/reminders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const validatedData = insertReminderSchema.parse(req.body);
+      const updatedReminder = await storage.updateReminder(id, validatedData);
+      
+      if (!updatedReminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+
+      res.json(updatedReminder);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Mark a reminder as complete/incomplete
+  app.patch("/api/reminders/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const { isCompleted } = req.body;
+      if (typeof isCompleted !== 'boolean') {
+        return res.status(400).json({ message: "isCompleted must be a boolean" });
+      }
+
+      const updatedReminder = await storage.markReminderComplete(id, isCompleted);
+      
+      if (!updatedReminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+
+      res.json(updatedReminder);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Delete a reminder
+  app.delete("/api/reminders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      const success = await storage.deleteReminder(id);
+      if (!success) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+
+      res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
