@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, numeric, date, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -67,6 +68,12 @@ export const payPackages = pgTable("pay_packages", {
   smsSent: boolean("sms_sent").default(false).notNull(),
 });
 
+export const payPackagesRelations = relations(payPackages, ({ many }) => ({
+  communicationLogs: many(communicationLogs),
+  journalEntries: many(journalEntries),
+  reminders: many(reminders),
+}));
+
 export const insertPayPackageSchema = createInsertSchema(payPackages).omit({
   id: true,
   createdAt: true,
@@ -84,7 +91,17 @@ export const communicationLogs = pgTable("communication_logs", {
   sentAt: timestamp("sent_at").defaultNow().notNull(),
   status: text("status").notNull(), // "success" or "failed"
   errorMessage: text("error_message"),
+  // New fields for the journal system
+  direction: text("direction").notNull().default("outbound"), // "outbound" or "inbound"
+  content: text("content"), // Content of the message/email
 });
+
+export const communicationLogsRelations = relations(communicationLogs, ({ one }) => ({
+  payPackage: one(payPackages, {
+    fields: [communicationLogs.payPackageId],
+    references: [payPackages.id],
+  }),
+}));
 
 export const insertCommunicationLogSchema = createInsertSchema(communicationLogs).omit({
   id: true,
@@ -93,3 +110,57 @@ export const insertCommunicationLogSchema = createInsertSchema(communicationLogs
 
 export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
 export type CommunicationLog = typeof communicationLogs.$inferSelect;
+
+// Journal Entries
+export const journalEntries = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
+  payPackageId: integer("pay_package_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  entryType: text("entry_type").notNull(), // "note", "followup", "response", etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+  payPackage: one(payPackages, {
+    fields: [journalEntries.payPackageId],
+    references: [payPackages.id],
+  }),
+}));
+
+export const insertJournalEntrySchema = createInsertSchema(journalEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
+export type JournalEntry = typeof journalEntries.$inferSelect;
+
+// Reminders
+export const reminders = pgTable("reminders", {
+  id: serial("id").primaryKey(),
+  payPackageId: integer("pay_package_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  dueDate: timestamp("due_date").notNull(),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  priority: text("priority").default("medium").notNull(), // "low", "medium", "high"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const remindersRelations = relations(reminders, ({ one }) => ({
+  payPackage: one(payPackages, {
+    fields: [reminders.payPackageId],
+    references: [payPackages.id],
+  }),
+}));
+
+export const insertReminderSchema = createInsertSchema(reminders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertReminder = z.infer<typeof insertReminderSchema>;
+export type Reminder = typeof reminders.$inferSelect;
