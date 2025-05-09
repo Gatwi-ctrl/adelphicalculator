@@ -55,6 +55,22 @@ export default function Header() {
               </Link>
             </li>
             <li>
+              <Link href="/journal" className={`flex items-center ${location.startsWith('/journal') ? 'text-primary' : 'text-neutral-600 hover:text-primary'} transition`}>
+                <svg 
+                  className="mr-2 h-4 w-4" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M6 6C6 4.89543 6.89543 4 8 4H16C17.1046 4 18 4.89543 18 6V20C18 21.1046 17.1046 22 16 22H8C6.89543 22 6 21.1046 6 20V6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 10H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 14H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 18H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Journal
+              </Link>
+            </li>
+            <li>
               <Link href="/account" className={`flex items-center ${location === '/account' ? 'text-primary' : 'text-neutral-600 hover:text-primary'} transition`}>
                 <svg 
                   className="mr-2 h-4 w-4" 
