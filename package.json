@@ -108,5 +108,17 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "Root-Level" : {
+    "name": "healthpaytracker",
+    "version": "1.0.0",
+    "scripts": {
+      "heroku-postbuild": "cd client && npm install && npm run build",
+      "start": "node server/dist/index.js", 
+      "build-server": "cd server && npm install && tsc"
+    },
+    "engines": {
+      "node": "18.x"
+    }
   }
 }
