@@ -10,6 +10,7 @@ import History from "@/pages/History";
 import Home from "@/pages/Home";
 import Journal from "@/pages/Journal";
 import JournalIndex from "@/pages/JournalIndex";
+import Account from "@/pages/Account";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/history" component={History} />
       <Route path="/journal" component={JournalIndex} />
       <Route path="/journal/:id" component={Journal} />
+      <Route path="/account" component={Account} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
