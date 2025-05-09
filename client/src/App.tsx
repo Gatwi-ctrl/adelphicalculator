@@ -8,6 +8,8 @@ import Footer from "@/components/Footer";
 import Calculator from "@/pages/Calculator";
 import History from "@/pages/History";
 import Home from "@/pages/Home";
+import Journal from "@/pages/Journal";
+import JournalIndex from "@/pages/JournalIndex";
 
 function Router() {
   return (
@@ -15,6 +17,8 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/calculator" component={Calculator} />
       <Route path="/history" component={History} />
+      <Route path="/journal" component={JournalIndex} />
+      <Route path="/journal/:id" component={Journal} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
